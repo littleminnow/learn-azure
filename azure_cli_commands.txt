@@ -1,0 +1,85 @@
+###############################################################################
+# Section 1: set up AZ access and CLI environment of whether interactive or not
+###############################################################################
+
+# Log into AZ account from CLI
+az login
+
+# User interactive CLI mode
+az interactive
+
+
+
+
+###############################################################################
+# Section 2: resource group commands
+###############################################################################
+
+# create resource group
+az group create --name kevinFreeResourceGroup --location eastus
+
+# List resource groups in my subscription
+az group list
+
+# Show one specific resource group
+az group show --name kevinFreeResourceGroup
+
+# remove the whole resource group
+az group delete --name kevinFreeResourceGroup --yes
+
+# Deploy a storage account into resource group (storage account must be unique across Azure)
+az storage account create --resource-group kevinFreeResourceGroup --name kevinstore2022 --location eastus --sku Standard_LRS --kind StorageV2
+
+# Deploy ARM template or Bicep file
+az deployment group create --resource-group kevinFreeResourceGroup --template-file storage.bicep
+
+# Lock resource group from incidental deletion etc
+az lock create --name LockKevinResourceGroup --lock-type CanNotDelete --resource-group kevinFreeResourceGroup
+
+# Check the list of existing locks (if any)
+az lock list --resource-group kevinFreeResourceGroup
+
+# Delete a lock
+az lock delete --name LockKevinResourceGroup --resource-group kevinFreeResourceGroup
+
+
+
+
+###############################################################################
+# Section 3: virtual machine commands
+###############################################################################
+
+# create vm
+#az vm create --resource-group kevinFreeResourceGroup --name kevinFreeVm --image RedHat:RHEL:8-LVM:8.1.20200318 --custom-data cloud-init.txt --size Standard_B1s --admin-username kevinadmin --public-ip-sku Standard --location eastus
+#az vm create --resource-group kevinFreeResourceGroup --name kevinFreeVm --image RedHat:RHEL:8-LVM:8.1.20200318 --custom-data cloud-init.txt --size Standard_B1s --admin-username kevinadmin --public-ip-sku Standard --location eastus --generate-ssh-keys
+az vm create \
+    --resource-group kevinFreeResourceGroup \
+    --name kevinFreeVm \
+    --image UbuntuLTS \
+    --admin-username azureuser \
+    --generate-ssh-keys \
+    --custom-data cloud-init.txt \
+	--location eastus \
+	--public-ip-sku Standard
+
+# Open port 80
+az vm open-port --port 80 --resource-group kevinFreeResourceGroup --name kevinFreeVm
+
+#--ssh-key-name kevin-ssh-key
+#--admin-password 123456
+
+# remove a vm without prompting for confirmation
+az vm delete -g kevinFreeResourceGroup -n kevin-free-vm --yes
+
+# remove all VMs in a resource group
+az vm delete --ids $(az vm list -g kevinFreeResourceGroup --query "[].id" -o tsv)
+
+
+
+
+###############################################################################
+# Section 4: VM images
+###############################################################################
+# List all RedHat images
+az vm image list --publisher RedHat --all
+
